@@ -17,11 +17,24 @@ module.exports = {
         }
       },
     changeUserInfo: async (req, res) => {
-      const userId = req.params.user_id; // Lấy guard_id từ URL parameter
-      const newInfor = req.body; // Lấy thông tin mới từ body request
+      const userId = req.params.user_id; 
+      const newInfor = req.body; 
+      const imagePath = req.file.path;
 
     try {
-      const result = await Guard.changeInfo(userId, newInfor);
+      const result = await Guard.changeInfo(userId, newInfor,imagePath);
+      return res.status(200).json({ message: result });
+    } catch (err) {
+      console.error('Error:', err);
+      return res.status(500).json({ message: 'An error occurred' });
+    }
+    },
+    changeUserImg: async (req, res) => {
+      const userId = req.params.user_id; 
+      const imagePath = req.file.path;
+
+    try {
+      const result = await Guard.changeImg(userId,imagePath);
       return res.status(200).json({ message: result });
     } catch (err) {
       console.error('Error:', err);

@@ -17,11 +17,24 @@ module.exports = {
         }
       },
     changeUserInfo: async (req, res) => {
-      const userId = req.params.user_id; // Lấy guard_id từ URL parameter
-      const newInfor = req.body; // Lấy thông tin mới từ body request
+      const userId = req.params.user_id; 
+      const newInfor = req.body;
+      const imagePath = req.file.path;
 
     try {
-      const result = await Customer.changeInfo(userId, newInfor);
+      const result = await Customer.changeInfo(userId, newInfor,imagePath);
+      return res.status(200).json({ message: result });
+    } catch (err) {
+      console.error('Error:', err);
+      return res.status(500).json({ message: 'An error occurred' });
+    }
+    },
+    changeUserImg: async (req, res) => {
+      const userId = req.params.user_id; 
+      const imagePath = req.file.path;
+
+    try {
+      const result = await Customer.changeImg(userId,imagePath);
       return res.status(200).json({ message: result });
     } catch (err) {
       console.error('Error:', err);
@@ -70,6 +83,20 @@ module.exports = {
         }
         res.json(booking);
       } catch (error) {
+        console.error('Error retrieving user', error);
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    },
+    getDetailBooking: async (req, res) => {
+      const bookingname = req.params.bookingname;
+      try {
+        const detailbooking = await Customer.getDetailBooking(bookingname);
+        if (!detailbooking) {
+          return res.status(404).json({ error: 'Detail Booking not found' });
+        }
+        res.json(detailbooking);
+      }
+      catch (error) {
         console.error('Error retrieving user', error);
         res.status(500).json({ error: 'Internal server error' });
       }
