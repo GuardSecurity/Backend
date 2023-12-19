@@ -1,6 +1,6 @@
 // routes/authRoutes.js
 const express = require('express');
-const authController = require('../controllers/authController')
+const authController = require('../controllers/AuthController')
 const authenticate = require('../middlewares/authenticate');
 
 const router = express.Router();
@@ -106,7 +106,7 @@ router.post('/login', authController.login);
  *       500:
  *         description: Internal server error
  */
-router.post('/changePassword', authController.changePassword);
+
 /**
  * @swagger
  * /resetPassword:
