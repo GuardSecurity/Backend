@@ -8,7 +8,6 @@ const Customer = require('../models/customerModel');
 const request = require('request');
 const moment = require('moment');
 
-
 router.post('/create_payment_url', function (req, res, next) {
   process.env.TZ = 'Asia/Ho_Chi_Minh';
 
@@ -24,7 +23,7 @@ router.post('/create_payment_url', function (req, res, next) {
   let tmnCode = '3AJ5FXBB';
   let secretKey = 'GSMYNKXFMYYUDFUCHAVBEJXXLIQZZUED';
   let vnpUrl = 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html';
-  let returnUrl = 'http://guardsystem.site:3001/customer-unpaid-list';
+  let returnUrl = 'http://localhost:3001/customer-unpaid-list';
   let orderId = moment(date).format('DDHHmmss');
   let amount = req.body.amount;
   let bookingname = req.body.bookingname;
@@ -56,21 +55,18 @@ router.post('/create_payment_url', function (req, res, next) {
   let signData = querystring.stringify(vnp_Params, { encode: false });
   let crypto = require('crypto');
   let hmac = crypto.createHmac('sha512', secretKey);
-  let signed = hmac.update( Buffer.from(signData, 'utf-8')).digest('hex');
+  let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
   vnp_Params['vnp_SecureHash'] = signed;
   vnpUrl += '?' + querystring.stringify(vnp_Params, { encode: false });
 
   res.send(vnpUrl);
 });
 
-
-
 router.get('/vnpay_ipn', function (req, res, next) {
   let vnp_Params = req.query;
   let secureHash = vnp_Params['vnp_SecureHash'];
   const bookingname = vnp_Params['vnp_OrderInfo'];
 
-  
   let orderId = vnp_Params['vnp_TxnRef'];
   let rspCode = vnp_Params['vnp_ResponseCode'];
 
@@ -85,7 +81,6 @@ router.get('/vnpay_ipn', function (req, res, next) {
   let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
   let paymentStatus = '0'; // Giả sử '0' là trạng thái khởi tạo giao dịch, chưa có IPN. Trạng thái này được lưu khi yêu cầu thanh toán chuyển hướng sang Cổng thanh toán VNPAY tại đầu khởi tạo đơn hàng.
 
-  
   if (paymentStatus == '0') {
     //kiểm tra tình trạng giao dịch trước khi cập nhật tình trạng thanh toán
     res.status(200).json({ RspCode: '00', Message: 'Success' });
@@ -95,17 +90,12 @@ router.get('/vnpay_ipn', function (req, res, next) {
       //that bai
       //paymentStatus = '2'
       // Ở đây cập nhật trạng thái giao dịch thanh toán thất bại vào CSDL của bạn
-    res.redirect('http://guardsystem.site:3001/customer-unpaid-list');
+      res.redirect('http://localhost:3001/customer-unpaid-list');
     }
   } else {
     res.status(200).json({ RspCode: '02', Message: 'This order has been updated to the payment status' });
   }
-  
-    } 
-);
-
-
-
+});
 
 function sortObject(obj) {
   let sorted = {};
