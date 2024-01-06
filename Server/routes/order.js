@@ -56,7 +56,7 @@ router.post('/create_payment_url', function (req, res, next) {
   let signData = querystring.stringify(vnp_Params, { encode: false });
   let crypto = require('crypto');
   let hmac = crypto.createHmac('sha512', secretKey);
-  let signed = hmac.update( Buffer.from(signData, 'utf-8')).digest('hex');
+  let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
   vnp_Params['vnp_SecureHash'] = signed;
   vnpUrl += '?' + querystring.stringify(vnp_Params, { encode: false });
 
@@ -70,7 +70,7 @@ router.get('/vnpay_ipn', function (req, res, next) {
   let secureHash = vnp_Params['vnp_SecureHash'];
   const bookingname = vnp_Params['vnp_OrderInfo'];
 
-  
+
   let orderId = vnp_Params['vnp_TxnRef'];
   let rspCode = vnp_Params['vnp_ResponseCode'];
 
@@ -85,42 +85,41 @@ router.get('/vnpay_ipn', function (req, res, next) {
   let signed = hmac.update(Buffer.from(signData, 'utf-8')).digest('hex');
   let paymentStatus = '0'; // Giả sử '0' là trạng thái khởi tạo giao dịch, chưa có IPN. Trạng thái này được lưu khi yêu cầu thanh toán chuyển hướng sang Cổng thanh toán VNPAY tại đầu khởi tạo đơn hàng.
 
-  
+
   if (paymentStatus == '0') {
     //kiểm tra tình trạng giao dịch trước khi cập nhật tình trạng thanh toán
     res.status(200).json({ RspCode: '00', Message: 'Success' });
     if (rspCode == '00') {
       Customer.Payment(bookingname);
+      Customer.sendBookingConfirmationEmail(bookingname);
     } else {
       //that bai
       //paymentStatus = '2'
       // Ở đây cập nhật trạng thái giao dịch thanh toán thất bại vào CSDL của bạn
-    res.redirect('http://guardsystem.site:3001/customer-unpaid-list');
+      res.redirect('http://guardsystem.site:3001/customer-unpaid-list');
     }
   } else {
     res.status(200).json({ RspCode: '02', Message: 'This order has been updated to the payment status' });
   }
-  
-    } 
+
+}
 );
 
 
-
-
-function sortObject(obj) {
-  let sorted = {};
-  let str = [];
-  let key;
-  for (key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      str.push(encodeURIComponent(key));
+  function sortObject(obj) {
+    let sorted = {};
+    let str = [];
+    let key;
+    for (key in obj) {
+      if (obj.hasOwnProperty(key)) {
+        str.push(encodeURIComponent(key));
+      }
     }
+    str.sort();
+    for (key = 0; key < str.length; key++) {
+      sorted[str[key]] = encodeURIComponent(obj[str[key]]).replace(/%20/g, '+');
+    }
+    return sorted;
   }
-  str.sort();
-  for (key = 0; key < str.length; key++) {
-    sorted[str[key]] = encodeURIComponent(obj[str[key]]).replace(/%20/g, '+');
-  }
-  return sorted;
-}
 
 module.exports = router;

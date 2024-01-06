@@ -119,5 +119,59 @@ module.exports = {
       throw new Error('An error occurred');
     }
   },
+
+  resetPasswordForget : async (resettoken, newPasswd) => {
+    try {
+      const newHashedPassword = await bcrypt.hash(newPasswd, 10);
+      const updateQuery = {
+        text: 'UPDATE users SET passwd = $1, resettoken = NULL WHERE resettoken = $2',
+        values: [newHashedPassword, resettoken],
+      };
+      await pool.query(updateQuery);
+      return 'Password reset successfully';
+    } catch (err) {
+      console.error('Error:', err);
+      throw new Error('An error occurred');
+    }
+  },
+
+  forgotPassword: async (email, token) => {
+    try {
+      const updateQuery = {
+        text: 'UPDATE users SET resettoken = $1 WHERE email = $2',
+        values: [token, email],
+      };
+      await pool.query(updateQuery);
   
+      return 'Password reset token generated and stored successfully';
+    } catch (err) {
+      console.error('Error:', err);
+      throw new Error('An error occurred');
+    }
+  },
+  sendEmail: async (email, resetPasswordLink) => {
+    const nodemailer = require('nodemailer');
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: 'capstoneeduconnect@gmail.com',
+        pass: 'eusgqfwhyqrugemi',
+      },
+    });
+
+    const mailOptions = {
+      from: 'capstoneeduconnect@gmail.com',
+      to: email,
+      subject: 'Reset Password',
+      html: `
+        <p>Xin chào bạn,</p>
+        <p>Bạn đã yêu cầu đặt lại mật khẩu của mình.</p>
+        <p>Nhấp vào liên kết bên dưới để thay đổi mật khẩu của bạn:</p>
+        <p><a href="${resetPasswordLink}">Thay đổi mật khẩu của tôi</a></p>
+        <br>
+        <p>Bỏ qua email này nếu bạn nhớ mật khẩu của mình, hoặc bạn chưa thực hiện yêu cầu.</p>
+      `,
+    };
+    await transporter.sendMail(mailOptions);
+  },
 };

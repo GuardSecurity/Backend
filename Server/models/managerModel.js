@@ -120,6 +120,46 @@ module.exports = {
           throw err;
         }
       },
+      sendBookingConfirmationEmail: async (bookingname) => {
+        try {
+          const updatestatus = {
+            text: 'select u.email from users u INNER join guard ga ON ga.users_id = u.users_id INNER join booking b on b.customer_id = ga.customer_id where b.bookingname = $1',
+            values: [bookingname],
+          };
+    
+          const { rows } = await pool.query(updatestatus); // Assuming you have a PostgreSQL pool named 'pool'
+    
+          if (rows.length === 0) {
+            throw new Error('No user found for the given booking name');
+          }
+    
+          const userEmail = rows[0].email;
+    
+          const nodemailer = require('nodemailer');
+          const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: 'capstoneeduconnect@gmail.com',
+              pass: 'eusgqfwhyqrugemi',
+            },
+          });
+    
+          const mailOptions = {
+            from: 'capstoneeduconnect@gmail.com',
+            to: userEmail,
+            subject: 'GUARD SYSTEM',
+            html: `
+              <p>Xin chào bạn,</p>
+              <p>Bạn có lịch làm việc mới vui lòng bạn kiểm tra và mọi thắc mắc có thể liên hệ đến chúng tôi</p>
+            `,
+          };
+    
+          await transporter.sendMail(mailOptions);
+        } catch (error) {
+          console.error('Error sending booking confirmation email:', error);
+          // You may choose to handle this error differently based on your requirements
+        }
+      },
       PickGuard: async (bookingname, listguard) => {
         try {
           for (let i = 0; i < listguard.length; i++) {
@@ -551,6 +591,20 @@ module.exports = {
                 };
               await pool.query(createNotiManager);
           return "Send Customer Enough Guard success";
+        }
+        catch(err){
+          console.error('Error:', err);
+          throw err;
+        }
+      },
+      getCountAttendance: async(bookingname) => {
+        try{
+          const selectBooking = {
+            text: 'SELECT d.lastname, d.firstname, COUNT(CASE WHEN cl.status = 1 THEN 1 END) AS attend,  COUNT(CASE WHEN cl.status = 0 THEN 0 END) AS absents FROM booking AS b INNER JOIN guard AS d ON b.manager_id = d.guard_id INNER JOIN calendar AS cl ON b.bookingname = cl.bookingname WHERE b.bookingname = $1 GROUP BY d.lastname, d.firstname;',
+            values: [bookingname],
+          };
+          const result = await pool.query(selectBooking);
+          return result.rows;
         }
         catch(err){
           console.error('Error:', err);
