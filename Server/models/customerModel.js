@@ -550,6 +550,19 @@ module.exports = {
       throw err;
     }
   },
+  getpayment: async (customer_id) => {
+    try {
+      const query = 'select cs.customer_id, cs.lastname, cs.firstname, b.* from booking b INNER join customer cs on b.customer_id = cs.customer_id where b.customer_id = $1 ;';
+
+      const values = [customer_id]
+      const result = await pool.query(query, values);
+      return result.rows;
+    }
+    catch (err) {
+      console.error('Error:', err);
+      throw err;
+    }
+  },
   CancelBooking: async (bookingname) => {
     try {
       const DeleteDetail = {
